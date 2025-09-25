@@ -24,7 +24,7 @@ RAW_DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "raw"
 RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def fetch_recent_observations(region_code="CL-RM", max_results=50, back_days=7, locale="es"):
+def fetch_recent_observations(region_code="CL", max_results=50, back_days=1, locale="es"):
     """
     Descarga observaciones recientes desde la API de eBird.
 
@@ -67,8 +67,12 @@ def save_raw_data(data, region_code="CL-RM"):
 
 if __name__ == "__main__":
     try:
-        observations = fetch_recent_observations(region_code="CL-RM", max_results=20)
-        save_raw_data(observations, region_code="CL-RM")
+        observations = fetch_recent_observations(
+            region_code="CL",
+            max_results=5000,
+            back_days=1
+        )
+        save_raw_data(observations, region_code="CL")
     except Exception:
         logging.exception("Fallo en la ingesta de datos")
 
