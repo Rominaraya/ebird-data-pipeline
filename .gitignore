@@ -11,3 +11,7 @@ data/
 
 #Logs
 logs/
+
+# Archivos de configuración y claves
+keys/
+*.json
