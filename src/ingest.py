@@ -68,11 +68,11 @@ def save_raw_data(data, region_code="CL-RM"):
 if __name__ == "__main__":
     try:
         observations = fetch_recent_observations(
-            region_code="CL",
+            region_code="US",
             max_results=5000,
             back_days=1
         )
-        save_raw_data(observations, region_code="CL")
+        save_raw_data(observations, region_code="US")
     except Exception:
         logging.exception("Fallo en la ingesta de datos")
 
