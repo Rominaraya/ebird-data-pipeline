@@ -1,15 +1,17 @@
+import os
 import pandas as pd
 import logging
 from pathlib import Path
 from datetime import datetime
+from google.cloud import storage
 
-# Directorios
-BASE_DIR = Path(__file__).resolve().parents[1]
-RAW_DATA_DIR = BASE_DIR / "data" / "raw"
-PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
-PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+RAW_FOLDER = "raw"
+PROCESSED_FOLDER = "processed"
+
 
 # Configuración de logs
+BASE_DIR = Path(__file__).resolve().parents[1]
 LOGS_DIR = BASE_DIR / "logs"
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -26,7 +28,6 @@ def filter_invalid_observations(df: pd.DataFrame) -> pd.DataFrame:
     """Mantiene solo observaciones válidas (obsValid == True)."""
     return df[df["obsValid"] == True].copy()
 
-
 def drop_irrelevant_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Elimina columnas irrelevantes para el análisis:
@@ -37,7 +38,6 @@ def drop_irrelevant_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     cols_to_drop = ["locName", "exoticCategory", "locationPrivate", "obsReviewed"]
     return df.drop(columns=[c for c in cols_to_drop if c in df.columns])
-
 
 def remove_duplicates(df: pd.DataFrame) -> pd.DataFrame:
     """Elimina duplicados basados en subId + speciesCode."""
@@ -82,24 +82,44 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df = handle_howmany(df)
     return df
 
-def save_processed_data(df: pd.DataFrame, region_code="CL-RM"):
+def get_latest_raw_from_gcs():
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+    blobs = list(bucket.list_blobs(prefix=f"{RAW_FOLDER}/"))
+
+    if not blobs:
+        raise FileNotFoundError("No se encontraron archivos en raw/ del bucket")
+
+    latest_blob = max(blobs, key=lambda b: b.time_created)
+    logging.info(f"Procesando archivo desde GCS: {latest_blob.name}")
+
+    data = latest_blob.download_as_text(encoding="utf-8")
+    df = pd.read_json(data)
+    return df, latest_blob.name
+def upload_processed_to_gcs(df, region_code="unknown"):
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = PROCESSED_DATA_DIR / f"ebird_{region_code}_processed_{timestamp}.csv"
-    df.to_csv(filename, index=False, encoding="utf-8")
-    logging.info(f"Datos procesados guardados en {filename}")
+    filename = f"{PROCESSED_FOLDER}/ebird_{region_code}_processed_{timestamp}.csv"
+
+    blob = bucket.blob(filename)
+    blob.upload_from_string(df.to_csv(index=False, encoding="utf-8"), content_type="text/csv")
+
+    logging.info(f"Procesado subido a gs://{BUCKET_NAME}/{filename}")
 
 
 if __name__ == "__main__":
     try:
-        latest_file = max(RAW_DATA_DIR.glob("*.json"), key=lambda f: f.stat().st_mtime)
-        logging.info(f"Procesando archivo: {latest_file}")
-
-        df_raw = pd.read_json(latest_file)
-
+        df_raw, raw_filename = get_latest_raw_from_gcs()
         df_clean = clean_dataset(df_raw)
 
-        region_code = latest_file.stem.split("_")[1]
-        save_processed_data(df_clean, region_code=region_code)
 
+        parts = Path(raw_filename).stem.split("_")
+        region_code = parts[1] if len(parts) > 1 else "unknown"
+
+        upload_processed_to_gcs(df_clean, region_code=region_code)
+
+        logging.info("Transformación completada y subida a GCS")
     except Exception:
         logging.exception("Fallo en la transformación de datos")
