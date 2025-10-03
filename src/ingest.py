@@ -79,8 +79,8 @@ def upload_raw_to_gcs(data, region_code: str):
 if __name__ == "__main__":
     try:
         observations = fetch_recent_observations(
-            region_code="US",
-            max_results=10,
+            region_code="CL",
+            max_results=5000,
             back_days=1
         )
         upload_raw_to_gcs(observations, region_code="US")

@@ -104,9 +104,11 @@ def upload_processed_to_gcs(df, region_code="unknown"):
     filename = f"{PROCESSED_FOLDER}/ebird_{region_code}_processed_{timestamp}.csv"
 
     blob = bucket.blob(filename)
-    blob.upload_from_string(df.to_csv(index=False, encoding="utf-8"), content_type="text/csv")
+    blob.upload_from_string(df.to_csv(index=False, encoding="utf-8"),content_type="text/csv")
 
-    logging.info(f"Procesado subido a gs://{BUCKET_NAME}/{filename}")
+    gcs_uri = f"gs://{BUCKET_NAME}/{filename}"
+    logging.info(f"Procesado subido a {gcs_uri}")
+    return gcs_uri
 
 
 if __name__ == "__main__":
@@ -114,11 +116,10 @@ if __name__ == "__main__":
         df_raw, raw_filename = get_latest_raw_from_gcs()
         df_clean = clean_dataset(df_raw)
 
-
         parts = Path(raw_filename).stem.split("_")
         region_code = parts[1] if len(parts) > 1 else "unknown"
 
-        upload_processed_to_gcs(df_clean, region_code=region_code)
+        gcs_uri = upload_processed_to_gcs(df_clean, region_code=region_code)
 
         logging.info("Transformación completada y subida a GCS")
     except Exception:
