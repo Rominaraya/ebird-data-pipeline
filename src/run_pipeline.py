@@ -1,13 +1,17 @@
 import logging
 import subprocess
+from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
+
+BASE_DIR = Path(__file__).resolve().parent
 def run_step(script):
-    logging.info(f"▶ Ejecutando {script}...")
-    result = subprocess.run(["python", script], capture_output=True, text=True)
+    script_path = BASE_DIR / script
+    logging.info(f"▶ Ejecutando {script_path}...")
+    result = subprocess.run(["python", str(script_path)], capture_output=True, text=True)
     if result.returncode != 0:
         logging.error(f"Error en {script}:\n{result.stderr}")
         raise RuntimeError(f"{script} falló")
