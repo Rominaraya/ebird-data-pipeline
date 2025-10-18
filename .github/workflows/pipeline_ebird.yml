@@ -2,7 +2,7 @@ name: eBird Pipeline
 
 on:
   schedule:
-    - cron: "0 15 * * *"
+    - cron: "0 15 * * *"  # Ejecuta todos los días a las 12:00 hora de Chile (15:00 UTC)
   workflow_dispatch:
 
 jobs:
@@ -23,22 +23,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          version: ">= 460.0.0"
-
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v1
         with:
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
           project_id: ebirds-data-pipeline
 
+      - name: Install Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: ">= 460.0.0"
+
       - name: Set environment variables
         run: |
           echo "EBIRD_API_KEY=${{ secrets.EBIRD_API_KEY }}" >> $GITHUB_ENV
           echo "GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}" >> $GITHUB_ENV
-          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" >> $GITHUB_ENV
 
       - name: Run pipeline
         run: python src/run_pipeline.py
