@@ -83,7 +83,7 @@ if __name__ == "__main__":
             max_results=5000,
             back_days=1
         )
-        upload_raw_to_gcs(observations, region_code="US")
+        upload_raw_to_gcs(observations, region_code="CL")
     except Exception:
         logging.exception("Fallo en la ingesta de datos")
 
