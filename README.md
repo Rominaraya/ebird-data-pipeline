@@ -85,7 +85,6 @@ El proceso para obtenerla es el siguiente:
 - Pandas (procesamiento de datos)
 
 ---
-
 ## Ejecución local
 
 ```bash
@@ -100,4 +99,43 @@ pip install -r requirements.txt
 # Ejecutar pipeline
 python src/run_pipeline.py
 
+```
 ---
+## Visualización de datos de avistamientos de aves
+Esta sección muestra ejemplos de análisis  realizados sobre los datos cargados en BigQuery. Las visualizaciones fueron creadas en Looker Studio
+a partir de consultas SQL ejecutadas directamente sobre la tabla ebird_data.ebird_avistamientos.
+
+###  Consulta 1: Top 10 registros con mayor cantidad observada
+
+```sql
+SELECT
+  comName AS nombre,
+  howMany AS cantidad_registrada
+FROM
+  `ebirds-data-pipeline.ebird_data.ebird_avistamientos`
+ORDER BY howMany DESC
+LIMIT 10;
+```
+Esta consulta muestra los 10 registros individuales con mayor cantidad de aves observadas en todo el histórico disponible.
+
+### Gráfico: Top 10 especies más observadas
+<img width="1085" height="707" alt="imagen" src="https://github.com/user-attachments/assets/ed27256b-7d70-4b08-9d03-7b887315f58c" />
+Este gráfico muestra las especies con mayor cantidad total de avistamientos en el histórico disponible.
+
+
+###  Consulta 1: Distribución espacial de observaciones de aves
+
+```sql
+SELECT
+  location,
+  comName AS especie,
+  howMany AS cantidad
+FROM
+  `ebirds-data-pipeline.ebird_data.ebird_avistamientos`;
+```
+
+### Mapa: Distribución espacial de observaciones de aves
+<img width="773" height="775" alt="imagen" src="https://github.com/user-attachments/assets/62045842-9bd1-4c62-98bc-ad1a3ab03e66" />
+
+Este gráfico muestra los puntos geográficos donde se han registrado observaciones válidas de aves en Chile continental.
+Los datos fueron obtenidos desde la API de eBird y procesados en BigQuery.
