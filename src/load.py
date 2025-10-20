@@ -45,27 +45,29 @@ def load_to_bigquery(gcs_uri: str):
     job_config = bigquery.LoadJobConfig(
         source_format=bigquery.SourceFormat.CSV,
         skip_leading_rows=1,
-        #autodetect=True,
-        write_disposition="WRITE_APPEND", #WRITE_TRUNCATE
-    schema = [
-        bigquery.SchemaField("speciesCode", "STRING"),
-        bigquery.SchemaField("comName", "STRING"),
-        bigquery.SchemaField("sciName", "STRING"),
-        bigquery.SchemaField("locId", "STRING"),
-        bigquery.SchemaField("obsDt", "TIMESTAMP"),
-        bigquery.SchemaField("howMany", "INTEGER"),
-        bigquery.SchemaField("lat", "FLOAT"),
-        bigquery.SchemaField("lng", "FLOAT"),
-        bigquery.SchemaField("obsValid", "BOOLEAN"),
-        bigquery.SchemaField("subId", "STRING"),
-        bigquery.SchemaField("year", "INTEGER"),
-        bigquery.SchemaField("month", "INTEGER"),
-        bigquery.SchemaField("day", "INTEGER"),
-        bigquery.SchemaField("location", "GEOGRAPHY"),
-        bigquery.SchemaField("region_code", "STRING"),
-    ]
+        write_disposition="WRITE_APPEND",  # o "WRITE_TRUNCATE" si quieres recrear la tabla
+        time_partitioning=bigquery.TimePartitioning(
+            type_=bigquery.TimePartitioningType.DAY,
+            field="obsDt"
+        ),
+        schema=[
+            bigquery.SchemaField("speciesCode", "STRING"),
+            bigquery.SchemaField("comName", "STRING"),
+            bigquery.SchemaField("sciName", "STRING"),
+            bigquery.SchemaField("locId", "STRING"),
+            bigquery.SchemaField("obsDt", "TIMESTAMP"),
+            bigquery.SchemaField("howMany", "INTEGER"),
+            bigquery.SchemaField("lat", "FLOAT"),
+            bigquery.SchemaField("lng", "FLOAT"),
+            bigquery.SchemaField("obsValid", "BOOLEAN"),
+            bigquery.SchemaField("subId", "STRING"),
+            bigquery.SchemaField("year", "INTEGER"),
+            bigquery.SchemaField("month", "INTEGER"),
+            bigquery.SchemaField("day", "INTEGER"),
+            bigquery.SchemaField("location", "GEOGRAPHY"),
+            bigquery.SchemaField("region_code", "STRING"),
+        ]
     )
-
     load_job = client.load_table_from_uri(gcs_uri, table_id, job_config=job_config)
     load_job.result()
 
@@ -73,8 +75,8 @@ def load_to_bigquery(gcs_uri: str):
 
 if __name__ == "__main__":
     try:
-        gcs_uri = get_latest_processed_from_gcs()
-        load_to_bigquery(gcs_uri)
+        latest_uri = get_latest_processed_from_gcs()
+        load_to_bigquery(latest_uri)
         logging.info("Carga a BigQuery completada")
-    except Exception:
-        logging.exception("Fallo en la carga de datos a BigQuery")
+    except Exception as e:
+        logging.exception(f"Fallo en la carga de datos a BigQuery: {e}")
