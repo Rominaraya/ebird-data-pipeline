@@ -101,11 +101,11 @@ python src/run_pipeline.py
 
 ```
 ---
-## Visualización de datos de avistamientos de aves
+## Visualización de datos de avistamientos de aves en Chile
 Esta sección muestra ejemplos de análisis  realizados sobre los datos cargados en BigQuery. Las visualizaciones fueron creadas en Looker Studio
 a partir de consultas SQL ejecutadas directamente sobre la tabla ebird_data.ebird_avistamientos.
 
-###  Consulta 1: Top 10 registros con mayor cantidad observada
+###  Consulta 1: Top 10 registros con mayor cantidad observada en Chile
 
 ```sql
 SELECT
@@ -123,7 +123,7 @@ Esta consulta muestra los 10 registros individuales con mayor cantidad de aves o
 Este gráfico muestra las especies con mayor cantidad total de avistamientos en el histórico disponible.
 
 
-###  Consulta 1: Distribución espacial de observaciones de aves
+###  Consulta 1: Distribución espacial de observaciones de aves en Chile
 
 ```sql
 SELECT
@@ -134,7 +134,7 @@ FROM
   `ebirds-data-pipeline.ebird_data.ebird_avistamientos`;
 ```
 
-### Mapa: Distribución espacial de observaciones de aves
+### Mapa: Distribución espacial de observaciones de aves en Chile
 <img width="773" height="775" alt="imagen" src="https://github.com/user-attachments/assets/62045842-9bd1-4c62-98bc-ad1a3ab03e66" />
 
 Este gráfico muestra los puntos geográficos donde se han registrado observaciones válidas de aves en Chile continental.
