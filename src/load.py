@@ -46,7 +46,7 @@ def load_to_bigquery(gcs_uri: str):
         source_format=bigquery.SourceFormat.CSV,
         skip_leading_rows=1,
         #autodetect=True,
-        write_disposition="WRITE_TRUNCATE", #"WRITE_APPEND"
+        write_disposition="WRITE_APPEND", #WRITE_TRUNCATE
     schema = [
         bigquery.SchemaField("speciesCode", "STRING"),
         bigquery.SchemaField("comName", "STRING"),

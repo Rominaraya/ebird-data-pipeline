@@ -13,8 +13,8 @@ eBird. 2025. eBird Basic Dataset. Cornell Lab of Ornithology, Ithaca, New York.
 ## Intención del proyecto
 El objetivo principal es crear un flujo de datos automatizado, reproducible y escalable que permita:
 
-- Obtener registros actualizados por día de observaciones de aves de una localidad específica desde la API de eBird.
-- Procesar y limpiar los datos para asegurar consistencia y trazabilidad.
+- Obtener registros actualizados por día de observaciones de aves en una región específica.
+- Limpiar, validar y enriquecer los datos para análisis  asegurar consistencia y trazabilidad.
 - Almacenarlos en Google Cloud Storage y BigQuery para análisis posteriores.
 
 ---
@@ -22,22 +22,29 @@ El objetivo principal es crear un flujo de datos automatizado, reproducible y es
 ## Funcionalidad
 
 1. **Ingesta (`ingest.py`)**  
-   - Consulta la API de eBird para obtener observaciones del día anterior de una localidad seleccionada.  
-   - Genera archivos crudos y los sube a Google Cloud Storage en la carpeta `raw/`.
+   - Consulta la API de eBird para obtener observaciones del día anterior.  
+   - Guarda los datos en formato JSON en la carpeta raw/ del bucket de GCS.
 
 2. **Transformación (`transform.py`)**  
-   - Descarga los archivos desde `raw/`.  
-   - Convierte los datos a formato tabular (CSV).  
-   - Añade campos de control como `timestamp` (hora de observación) y `execution_time` (hora de ejecución del pipeline).  
-   - Estandariza columnas y elimina duplicados.  
-   - Guarda los resultados en la carpeta `processed/` y en GCS.
+   - Descarga el archivo más reciente desde raw/. 
+   - Aplica limpieza y validación:  
+     - Filtra observaciones válidas (obsValid = True)  
+     - Elimina columnas irrelevantes (locName, exoticCategory, etc.)  
+     - Elimina duplicados (subId + speciesCode)
+     - Normaliza fechas (obsDt) y extrae year, month, day
+     - Convierte coordenadas a GEOGRAPHY (POINT(lng lat))
+     - Filtra registros con howMany nulo o igual a 0
+   - Añade la columna region_code extraída del nombre del archivo.
+   - Guarda el resultado como CSV en la carpeta processed/ del bucket.
 
 3. **Carga (`load.py`)**  
-   - Toma el último archivo procesado.  
-   - Inserta los datos en una tabla de BigQuery (`ebird_data.observations`).  
+   - Obtiene el último archivo procesado desde GCS. 
+   - Carga los datos a BigQuery en la tabla ebird_data.ebird_avistamientos. 
+   - Define el esquema manualmente, incluyendo tipos como TIMESTAMP, GEOGRAPHY, INTEGER, etc.
+   - Usa WRITE_APPEND para conservar el histórico.
 
 4. **Orquestación (`run_pipeline.py`)**  
-   - Ejecuta en orden los pasos de ingesta, transformación y carga.  
+   - Ejecuta los pasos de ingesta, transformación y carga en orden.  
    - Incluye logging y control de errores para trazabilidad.
 
 5. **Automatización (`.github/workflows/pipeline_ebird.yml`)**  
@@ -51,7 +58,7 @@ El objetivo principal es crear un flujo de datos automatizado, reproducible y es
 
 El pipeline requiere las siguientes variables (configuradas como GitHub Secrets o en un archivo `.env` local):
 
-- `EBIRD_API_KEY` → API key de eBird.  
+- `EBIRD_API_KEY` → Clave de acceso a la API de eBird
 - `GCS_BUCKET_NAME` → Nombre del bucket en Google Cloud Storage.  
 - `GCP_CREDENTIALS` → Credenciales JSON de servicio para GCP.  
 
